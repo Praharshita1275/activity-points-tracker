@@ -14,7 +14,12 @@ const seed = async () => {
     { category: 'Cultural', subCategory: 'Inter-college', defaultPoints: 10, maxPoints: 50 },
     { category: 'Cultural', subCategory: 'Intra-college', defaultPoints: 5, maxPoints: 20 },
     { category: 'Academic', subCategory: 'Paper Published', defaultPoints: 15, maxPoints: 30 },
-    { category: 'Academic', subCategory: 'Workshop Attended', defaultPoints: 5, maxPoints: 20 }
+    { category: 'Academic', subCategory: 'Workshop Attended', defaultPoints: 5, maxPoints: 20 },
+    { category: 'Online Learning', subCategory: 'MOOCs', defaultPoints: 10, maxPoints: 40 },
+    { category: 'Events', subCategory: 'Tech Fest/R&D Day/Conference/Hackathon', defaultPoints: 15, maxPoints: 45 },
+    { category: 'Events', subCategory: 'Freshers Workshop', defaultPoints: 10, maxPoints: 30 },
+    { category: 'Social Service', subCategory: 'Rural Reporting', defaultPoints: 10, maxPoints: 30 },
+    { category: 'Environmental', subCategory: 'Harithaharam', defaultPoints: 10, maxPoints: 30 }
   ];
 
   for (const r of refs) {

@@ -34,22 +34,53 @@ export default function UploadActivity(){
 
   return (
     <div className="max-w-xl mx-auto mt-8 bg-white p-6 rounded shadow">
-      <h2 className="text-2xl mb-4">Upload Activity</h2>
+      <h2 className="text-2xl mb-4 font-semibold text-[#333D79]">Upload Activity</h2>
       <form onSubmit={handleSubmit}>
-        <select className="w-full p-2 border mb-2" value={form.category} onChange={e=>setForm({...form, category: e.target.value, subCategory: ''})}>
+        <select 
+          className="w-full p-2 border rounded mb-3 focus:outline-none focus:ring-2 focus:ring-[#333D79] focus:border-[#333D79]" 
+          value={form.category} 
+          onChange={e=>setForm({...form, category: e.target.value, subCategory: ''})}>
           <option value="">Select Category</option>
           {[...new Set(pointsRef.map(p=>p.category))].map(c=> <option key={c} value={c}>{c}</option>)}
         </select>
-        <select className="w-full p-2 border mb-2" value={form.subCategory} onChange={e=>setForm({...form, subCategory: e.target.value})}>
+        <select 
+          className="w-full p-2 border rounded mb-3 focus:outline-none focus:ring-2 focus:ring-[#333D79] focus:border-[#333D79]" 
+          value={form.subCategory} 
+          onChange={e=>setForm({...form, subCategory: e.target.value})}>
           <option value="">Select Sub Category</option>
           {subCats.map(s=> <option key={s} value={s}>{s}</option>)}
         </select>
-        <select className="w-full p-2 border mb-2" value={form.semester} onChange={e=>setForm({...form, semester: e.target.value})}>
+        <select 
+          className="w-full p-2 border rounded mb-3 focus:outline-none focus:ring-2 focus:ring-[#333D79] focus:border-[#333D79]" 
+          value={form.semester} 
+          onChange={e=>setForm({...form, semester: e.target.value})}>
           {Array.from({length:8}).map((_,i)=><option key={i} value={i+1}>Semester {i+1}</option>)}
         </select>
-        <input className="w-full p-2 border mb-2" placeholder="Description" value={form.description} onChange={e=>setForm({...form, description: e.target.value})} />
-        <input className="w-full p-2 border mb-2" type="file" accept=".pdf,.jpg,.jpeg,.png" onChange={e=>setFile(e.target.files[0])} />
-        <button disabled={isSubmitting} className={`w-full ${isSubmitting? 'bg-gray-400':'bg-blue-600'} text-white p-2 rounded`}>
+        <input 
+          className="w-full p-2 border rounded mb-3 focus:outline-none focus:ring-2 focus:ring-[#333D79] focus:border-[#333D79]" 
+          placeholder="Description" 
+          value={form.description} 
+          onChange={e=>setForm({...form, description: e.target.value})} 
+        />
+        <input
+          className="w-full p-2 border rounded mb-4 file:mr-4 file:py-2 file:px-4 file:border-0 file:text-sm file:font-medium file:bg-[#333D79] file:text-white hover:file:bg-[#333D79]/90"
+          type="file"
+          accept=".pdf,.jpg,.jpeg,.png"
+          onChange={(e) => {
+            const selectedFile = e.target.files[0];
+            if (selectedFile && !selectedFile.type.includes('pdf')) {
+              toast.warning('Only PDF files are accepted for proof documents.');
+              e.target.value = ''; // Clear the input
+              setFile(null);
+            } else {
+              setFile(selectedFile);
+            }
+          }}
+        />
+        <p className="text-sm text-gray-600 mb-4">Note: Only PDF type of files are accepted for proof documents.</p>
+        <button 
+          disabled={isSubmitting} 
+          className={`w-full ${isSubmitting ? 'bg-gray-400' : 'bg-[#333D79] hover:bg-[#333D79]/90'} text-white p-2 rounded font-medium transition-colors duration-200`}>
           {isSubmitting ? 'Uploading...' : 'Upload'}
         </button>
       </form>

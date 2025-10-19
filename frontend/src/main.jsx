@@ -8,7 +8,7 @@ import './index.css'
 import NavBar from './components/NavBar'
 
 // Ensure axios sends requests to the backend in development
-axios.defaults.baseURL = 'http://localhost:5001'
+axios.defaults.baseURL = 'http://localhost:5007'
 
 createRoot(document.getElementById('root')).render(
   <React.StrictMode>

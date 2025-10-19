@@ -8,7 +8,7 @@ export const AuthProvider = ({ children }) => {
 
   useEffect(()=>{
     // Ensure axios sends requests to backend during development (match main.jsx)
-    axios.defaults.baseURL = 'http://localhost:5001'
+    axios.defaults.baseURL = 'http://localhost:5007'
 
     const token = localStorage.getItem('token')
     if (token) {

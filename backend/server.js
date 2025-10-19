@@ -12,8 +12,25 @@ connectDB();
 app.use(cors());
 app.use(express.json());
 
-// serve uploads
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+// ✅ serve uploads with proper headers for PDF embedding
+app.use(
+  '/uploads',
+  express.static(path.join(__dirname, 'uploads'), {
+    setHeaders: (res, filePath) => {
+      // Allow embedding in iframes
+      res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+      res.setHeader('Cross-Origin-Embedder-Policy', 'require-corp');
+
+      // Enable CORS for files
+      res.setHeader('Access-Control-Allow-Origin', '*');
+
+      // Ensure correct MIME type for PDFs
+      if (filePath.endsWith('.pdf')) {
+        res.setHeader('Content-Type', 'application/pdf');
+      }
+    },
+  })
+);
 
 // API routes
 app.use('/api/auth', require('./routes/auth'));
@@ -32,7 +49,6 @@ const server = app.listen(PORT, () => console.log(`Server running on port ${PORT
 server.on('error', (err) => {
   if (err && err.code === 'EADDRINUSE') {
     console.error(`Port ${PORT} is already in use. Please free the port or change PORT in .env.`);
-    // exit with non-zero code so process managers know it failed
     process.exit(1);
   } else {
     console.error('Server error:', err);
@@ -46,5 +62,4 @@ process.on('unhandledRejection', (reason, promise) => {
 
 process.on('uncaughtException', (err) => {
   console.error('Uncaught Exception:', err);
-  // consider exiting if necessary or keep running depending on policy
 });
