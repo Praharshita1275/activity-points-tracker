@@ -22,7 +22,7 @@ export default function UploadActivity(){
       fd.append('description', form.description)
       if (file) fd.append('proof', file)
       await axios.post('/api/activities/upload', fd, { headers: {'Content-Type':'multipart/form-data'} })
-      toast.success('Uploaded. Waiting for verification')
+      toast.success('Successfully uploaded! Waiting for verification')
       // reset form
       setForm({ category: '', subCategory: '', semester: 1, description: '' })
       setFile(null)

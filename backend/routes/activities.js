@@ -78,4 +78,23 @@ router.get('/my', auth, async (req, res) => {
   }
 });
 
+// Delete activity (only if pending)
+router.delete('/:id', auth, async (req, res) => {
+  try {
+    const rollNo = req.user.rollNo;
+    const activity = await Activity.findOne({ _id: req.params.id, studentRollNo: rollNo });
+    if (!activity) {
+      return res.status(404).json({ message: 'Activity not found' });
+    }
+    if (activity.status !== 'Pending') {
+      return res.status(403).json({ message: 'Cannot delete activity that is not pending' });
+    }
+    await Activity.findByIdAndDelete(req.params.id);
+    res.json({ message: 'Activity deleted successfully' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
 module.exports = router;

@@ -7,6 +7,7 @@ import Dashboard from './components/Dashboard'
 import UploadActivity from './components/UploadActivity'
 import ActivitiesList from './components/ActivitiesList'
 import AdminDashboard from './components/AdminDashboard'
+import AdminStudents from './components/AdminStudents'
 import { useAuth } from './context/AuthContext'
 
 function App() {
@@ -22,6 +23,7 @@ function App() {
           <Route path="/upload" element={user ? <UploadActivity /> : <Navigate to="/" />} />
           <Route path="/activities" element={user ? <ActivitiesList /> : <Navigate to="/" />} />
           <Route path="/admin" element={user && user.role === 'admin' ? <AdminDashboard /> : <Navigate to="/admin-login" />} />
+          <Route path="/admin/students" element={user && user.role === 'admin' ? <AdminStudents /> : <Navigate to="/admin-login" />} />
         </Routes>
       </div>
     </div>

@@ -109,4 +109,15 @@ router.put('/edit-points/:id', auth, adminMiddleware, async (req, res) => {
   }
 });
 
+// Get all students with their details
+router.get('/students', auth, adminMiddleware, async (req, res) => {
+  try {
+    const students = await Student.find({}, 'rollNo name department totalPoints semesterPoints').sort({ rollNo: 1 });
+    res.json(students);
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Server error');
+  }
+});
+
 module.exports = router;

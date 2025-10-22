@@ -1,8 +1,14 @@
 import React, { useState, useEffect } from 'react';
+import { Document, Page, pdfjs } from 'react-pdf';
+
+// Set up PDF.js worker
+pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.js`;
 
 export default function ViewProofModal({ isOpen, onClose, proofURL }) {
   const [fileType, setFileType] = useState(null);
   const [error, setError] = useState(null);
+  const [numPages, setNumPages] = useState(null);
+  const [pageNumber, setPageNumber] = useState(1);
 
   useEffect(() => {
     if (proofURL) {
@@ -15,8 +21,19 @@ export default function ViewProofModal({ isOpen, onClose, proofURL }) {
         setFileType('unknown');
       }
       setError(null);
+      setPageNumber(1);
+      setNumPages(null);
     }
   }, [proofURL]);
+
+  const onDocumentLoadSuccess = ({ numPages }) => {
+    setNumPages(numPages);
+  };
+
+  const onDocumentLoadError = (error) => {
+    console.error('PDF load error:', error);
+    setError('Failed to load PDF. Please try opening in a new tab.');
+  };
 
   if (!isOpen) return null;
 
@@ -34,6 +51,13 @@ export default function ViewProofModal({ isOpen, onClose, proofURL }) {
               className="text-[#333D79] hover:text-[#333D79]/80 text-sm"
             >
               Open in New Tab
+            </a>
+            <a
+              href={proofURL}
+              download
+              className="text-[#333D79] hover:text-[#333D79]/80 text-sm"
+            >
+              Download PDF
             </a>
             <button
               onClick={onClose}
@@ -56,12 +80,41 @@ export default function ViewProofModal({ isOpen, onClose, proofURL }) {
           )}
 
           {fileType === 'pdf' && (
-            <iframe
-              src={proofURL}
-              className="w-full h-full border-0 rounded"
-              title="Proof PDF"
-              onError={() => setError('Failed to load PDF')}
-            />
+            <div className="w-full h-full flex flex-col">
+              <Document
+                file={proofURL}
+                onLoadSuccess={onDocumentLoadSuccess}
+                onLoadError={onDocumentLoadError}
+              >
+                <Page
+                  pageNumber={pageNumber}
+                  width={800}
+                  renderTextLayer={false}
+                  renderAnnotationLayer={false}
+                />
+              </Document>
+              {numPages && (
+                <div className="flex justify-center items-center p-2 bg-white border-t">
+                  <button
+                    onClick={() => setPageNumber(Math.max(1, pageNumber - 1))}
+                    disabled={pageNumber <= 1}
+                    className="px-3 py-1 mx-1 bg-[#333D79] text-white rounded disabled:bg-gray-300"
+                  >
+                    Previous
+                  </button>
+                  <span className="mx-2 text-[#333D79]">
+                    Page {pageNumber} of {numPages}
+                  </span>
+                  <button
+                    onClick={() => setPageNumber(Math.min(numPages, pageNumber + 1))}
+                    disabled={pageNumber >= numPages}
+                    className="px-3 py-1 mx-1 bg-[#333D79] text-white rounded disabled:bg-gray-300"
+                  >
+                    Next
+                  </button>
+                </div>
+              )}
+            </div>
           )}
 
           {fileType === 'unknown' && (

@@ -17,16 +17,13 @@ app.use(
   '/uploads',
   express.static(path.join(__dirname, 'uploads'), {
     setHeaders: (res, filePath) => {
-      // Allow embedding in iframes
-      res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
-      res.setHeader('Cross-Origin-Embedder-Policy', 'require-corp');
-
-      // Enable CORS for files
+      // Enable CORS
       res.setHeader('Access-Control-Allow-Origin', '*');
 
-      // Ensure correct MIME type for PDFs
+      // Ensure correct MIME type for PDFs and force inline display
       if (filePath.endsWith('.pdf')) {
-        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Type', 'application/pdf'); 
+        res.setHeader('Content-Disposition', 'inline'); 
       }
     },
   })
@@ -63,3 +60,4 @@ process.on('unhandledRejection', (reason, promise) => {
 process.on('uncaughtException', (err) => {
   console.error('Uncaught Exception:', err);
 });
+
