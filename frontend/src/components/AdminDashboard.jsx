@@ -1,56 +1,141 @@
-import React, { useEffect, useState } from 'react'
-import axios from 'axios'
-import { toast } from 'react-toastify'
-import ViewProofModal from './ViewProofModal'
-import { Link } from 'react-router-dom'
+import React, { useEffect, useState } from "react";
+import axios from "axios";
+import { toast } from "react-toastify";
+import ViewProofModal from "./ViewProofModal";
+import { Link } from "react-router-dom";
 
-export default function AdminDashboard(){
-  const [activities, setActivities] = useState([])
-  const [modalOpen, setModalOpen] = useState(false)
-  const [selectedProof, setSelectedProof] = useState('')
+export default function AdminDashboard() {
+  const [activities, setActivities] = useState([]);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [selectedProof, setSelectedProof] = useState("");
 
-  const load = async ()=>{
-    const res = await axios.get('/api/admin/activities')
-    setActivities(res.data)
-  }
+  const load = async () => {
+    try {
+      const res = await axios.get("/api/admin/activities");
+      setActivities(res.data);
+    } catch (err) {
+      console.error("Error loading activities:", err);
+      toast.error(err.response?.data?.message || "Failed to load activities");
+    }
+  };
 
-  useEffect(()=>{ load() },[])
+  useEffect(() => {
+    load();
+  }, []);
 
-  const approve = async (id)=>{ await axios.post(`/api/admin/verify/${id}`); toast.success('Approved'); load() }
-  const reject = async (id)=>{ await axios.post(`/api/admin/reject/${id}`); toast.info('Rejected'); load() }
+  const approve = async (id) => {
+    try {
+      await axios.post(`/api/admin/verify/${id}`);
+      toast.success("Approved");
+      load();
+    } catch (err) {
+      console.error("Approve error:", err.response?.data);
+      toast.error(err.response?.data?.message || "Failed to approve activity");
+    }
+  };
+
+  const reject = async (id) => {
+    try {
+      await axios.post(`/api/admin/reject/${id}`);
+      toast.info("Rejected");
+      load();
+    } catch (err) {
+      console.error("Reject error:", err.response?.data);
+      toast.error(err.response?.data?.message || "Failed to reject activity");
+    }
+  };
 
   const openModal = (proofURL) => {
-    setSelectedProof(proofURL)
-    setModalOpen(true)
-  }
+    setSelectedProof(proofURL);
+    setModalOpen(true);
+  };
 
   const closeModal = () => {
-    setModalOpen(false)
-    setSelectedProof('')
-  }
+    setModalOpen(false);
+    setSelectedProof("");
+  };
 
   return (
     <div className="p-6">
-      <h1 className="text-2xl mb-4 font-semibold text-[#333D79]">Admin - All Activities</h1>
+      <h1 className="text-2xl mb-4 font-semibold text-[#333D79]">
+        Admin - All Activities
+      </h1>
       <div className="mb-4">
-        <Link to="/admin/students" className="bg-[#333D79] text-white px-4 py-2 rounded hover:bg-[#333D79]/90">
+        <Link
+          to="/admin/students"
+          className="bg-[#333D79] text-white px-4 py-2 rounded hover:bg-[#333D79]/90"
+        >
           View All Students
         </Link>
       </div>
       <div className="space-y-3">
-        {activities.map(a=> (
+        {activities.map((a) => (
           <div key={a._id} className="bg-white p-4 rounded shadow">
-            <div className="flex justify-between"><div>{a.studentRollNo} — {a.category}/{a.subCategory}</div><div>{a.status}</div></div>
-            <div>Semester: {a.semester} — Points: {a.points}</div>
-            <div className="mt-2"><button className="bg-[#333D79] text-white px-3 py-1 rounded hover:bg-[#333D79]/90" onClick={() => openModal(a.proofURL)}>View Proof</button></div>
-            <div className="mt-2 space-x-2">
-              <button onClick={()=>approve(a._id)} className="bg-[#333D79] text-white px-3 py-1 rounded hover:bg-[#333D79]/90">Approve</button>
-              <button onClick={()=>reject(a._id)} className="bg-gray-600 text-white px-3 py-1 rounded hover:bg-gray-700">Reject</button>
+            <div className="flex justify-between items-center">
+              <div className="font-medium">
+                {a.studentRollNo} — {a.category}/{a.subCategory}
+              </div>
+              <div
+                className={`px-3 py-1 rounded text-sm font-medium ${
+                  a.status === "Verified"
+                    ? "bg-green-100 text-green-800"
+                    : a.status === "Rejected"
+                    ? "bg-red-100 text-red-800"
+                    : "bg-yellow-100 text-yellow-800"
+                }`}
+              >
+                {a.status}
+              </div>
+            </div>
+            <div className="text-gray-600 text-sm mt-2">
+              <span>Semester: {a.semester}</span>
+              <span className="mx-2">•</span>
+              <span>Points: {a.points}</span>
+              {a.description && (
+                <>
+                  <span className="mx-2">•</span>
+                  <span>{a.description}</span>
+                </>
+              )}
+            </div>
+            <div className="mt-3 flex gap-2">
+              <button
+                className="bg-[#333D79] text-white px-3 py-1 rounded hover:bg-[#333D79]/90 text-sm"
+                onClick={() => openModal(a.proofURL)}
+              >
+                View Proof
+              </button>
+              <button
+                onClick={() => approve(a._id)}
+                disabled={a.status === "Verified" || a.status === "Rejected"}
+                className={`px-4 py-1 rounded text-sm font-medium transition-colors ${
+                  a.status === "Verified" || a.status === "Rejected"
+                    ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                    : "bg-green-600 text-white hover:bg-green-700"
+                }`}
+              >
+                {a.status === "Verified" ? "✓ Approved" : "Approve"}
+              </button>
+              <button
+                onClick={() => reject(a._id)}
+                disabled={a.status === "Verified" || a.status === "Rejected"}
+                className={`px-4 py-1 rounded text-sm font-medium transition-colors ${
+                  a.status === "Verified" || a.status === "Rejected"
+                    ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                    : "bg-red-600 text-white hover:bg-red-700"
+                }`}
+              >
+                {a.status === "Rejected" ? "✗ Rejected" : "Reject"}
+              </button>
             </div>
           </div>
         ))}
       </div>
-      <ViewProofModal isOpen={modalOpen} onClose={closeModal} proofURL={selectedProof} />
+      <ViewProofModal
+        isOpen={modalOpen}
+        onClose={closeModal}
+        proofURL={selectedProof}
+      />
     </div>
-  )
+  );
 }

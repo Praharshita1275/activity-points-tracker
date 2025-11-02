@@ -1,18 +1,30 @@
-const express = require('express');
+const express = require("express");
 const router = express.Router();
-const multer = require('multer');
-const fs = require('fs');
-const path = require('path');
-const Activity = require('../models/Activity');
-const Student = require('../models/Student');
-const PointsReference = require('../models/PointsReference');
-const auth = require('../middleware/auth');
-const cloudinary = require('../utils/cloudinary');
+const multer = require("multer");
+const fs = require("fs");
+const path = require("path");
+const Activity = require("../models/Activity");
+const Student = require("../models/Student");
+const PointsReference = require("../models/PointsReference");
+const auth = require("../middleware/auth");
+const cloudinary = require("../utils/cloudinary");
 
-const upload = multer({ dest: 'uploads/' });
+// Configure multer to preserve file extensions
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, "uploads/");
+  },
+  filename: function (req, file, cb) {
+    // Keep original extension
+    const ext = path.extname(file.originalname);
+    cb(null, file.fieldname + "-" + Date.now() + ext);
+  },
+});
+
+const upload = multer({ storage: storage });
 
 // Upload activity (student)
-router.post('/upload', auth, upload.single('proof'), async (req, res) => {
+router.post("/upload", auth, upload.single("proof"), async (req, res) => {
   try {
     const { category, subCategory, semester, description } = req.body;
     const rollNo = req.user.rollNo;
@@ -27,10 +39,15 @@ router.post('/upload', auth, upload.single('proof'), async (req, res) => {
       subCategory,
       semester: Number(semester),
       description,
-      createdAt: { $gte: recentWindow }
+      createdAt: { $gte: recentWindow },
     });
     if (duplicate) {
-      return res.status(409).json({ message: 'Duplicate submission detected. Please wait a moment before trying again.' });
+      return res
+        .status(409)
+        .json({
+          message:
+            "Duplicate submission detected. Please wait a moment before trying again.",
+        });
     }
 
     // find default points from reference
@@ -38,13 +55,27 @@ router.post('/upload', auth, upload.single('proof'), async (req, res) => {
     const defaultPoints = ref ? ref.defaultPoints : 0;
 
     // upload file to cloudinary or move to uploads
-    let proofURL = '';
+    let proofURL = "";
     if (req.file) {
       const filePath = path.resolve(req.file.path);
+      console.log("📤 Uploading file to Cloudinary:", filePath);
       const result = await cloudinary.uploader.upload(filePath);
+
+      // Log complete Cloudinary response
+      console.log("\n========== CLOUDINARY UPLOAD RESPONSE ==========");
+      console.log(JSON.stringify(result, null, 2));
+      console.log("===============================================\n");
+
       proofURL = result.secure_url;
+      console.log("✅ Proof URL set to:", proofURL);
+
       if (result.removeLocal) {
-        try { fs.unlinkSync(filePath); } catch (e) { /* ignore */ }
+        try {
+          fs.unlinkSync(filePath);
+          console.log("🗑️  Local temp file deleted:", filePath);
+        } catch (e) {
+          console.log("⚠️  Could not delete temp file:", e.message);
+        }
       }
     }
 
@@ -56,44 +87,51 @@ router.post('/upload', auth, upload.single('proof'), async (req, res) => {
       description,
       points: defaultPoints, // will be finalized on verification
       proofURL,
-      status: 'Pending'
+      status: "Pending",
     });
     await activity.save();
-    res.json({ message: 'Uploaded successfully', activity });
+    res.json({ message: "Uploaded successfully", activity });
   } catch (err) {
-    console.error('Upload error:', err);
-    res.status(500).json({ message: 'Server error', error: err.message });
+    console.error("Upload error:", err);
+    res.status(500).json({ message: "Server error", error: err.message });
   }
 });
 
 // Get student's activities
-router.get('/my', auth, async (req, res) => {
+router.get("/my", auth, async (req, res) => {
   try {
     const rollNo = req.user.rollNo;
-    const activities = await Activity.find({ studentRollNo: rollNo }).sort({ createdAt: -1 });
+    const activities = await Activity.find({ studentRollNo: rollNo }).sort({
+      createdAt: -1,
+    });
     res.json(activities);
   } catch (err) {
     console.error(err);
-    res.status(500).send('Server error');
+    res.status(500).send("Server error");
   }
 });
 
 // Delete activity (only if pending)
-router.delete('/:id', auth, async (req, res) => {
+router.delete("/:id", auth, async (req, res) => {
   try {
     const rollNo = req.user.rollNo;
-    const activity = await Activity.findOne({ _id: req.params.id, studentRollNo: rollNo });
+    const activity = await Activity.findOne({
+      _id: req.params.id,
+      studentRollNo: rollNo,
+    });
     if (!activity) {
-      return res.status(404).json({ message: 'Activity not found' });
+      return res.status(404).json({ message: "Activity not found" });
     }
-    if (activity.status !== 'Pending') {
-      return res.status(403).json({ message: 'Cannot delete activity that is not pending' });
+    if (activity.status !== "Pending") {
+      return res
+        .status(403)
+        .json({ message: "Cannot delete activity that is not pending" });
     }
     await Activity.findByIdAndDelete(req.params.id);
-    res.json({ message: 'Activity deleted successfully' });
+    res.json({ message: "Activity deleted successfully" });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ message: "Server error" });
   }
 });
 

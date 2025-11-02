@@ -1,13 +1,13 @@
-const express = require('express');
+const express = require("express");
 const router = express.Router();
-const Activity = require('../models/Activity');
-const Student = require('../models/Student');
-const PointsReference = require('../models/PointsReference');
-const auth = require('../middleware/auth');
-const adminMiddleware = require('../middleware/admin');
+const Activity = require("../models/Activity");
+const Student = require("../models/Student");
+const PointsReference = require("../models/PointsReference");
+const auth = require("../middleware/auth");
+const adminMiddleware = require("../middleware/admin");
 
 // Get activities with optional filters
-router.get('/activities', auth, adminMiddleware, async (req, res) => {
+router.get("/activities", auth, adminMiddleware, async (req, res) => {
   try {
     const { rollNo, semester, category, status } = req.query;
     const filter = {};
@@ -19,30 +19,58 @@ router.get('/activities', auth, adminMiddleware, async (req, res) => {
     res.json(activities);
   } catch (err) {
     console.error(err);
-    res.status(500).send('Server error');
+    res.status(500).send("Server error");
   }
 });
 
 // Verify an activity (apply points with category max enforcement)
-router.post('/verify/:id', auth, adminMiddleware, async (req, res) => {
+router.post("/verify/:id", auth, adminMiddleware, async (req, res) => {
   try {
+    console.log("Verifying activity:", req.params.id);
     const activity = await Activity.findById(req.params.id);
-    if (!activity) return res.status(404).json({ message: 'Activity not found' });
-    if (activity.status === 'Verified') return res.status(400).json({ message: 'Already verified' });
+    if (!activity) {
+      console.log("Activity not found:", req.params.id);
+      return res.status(404).json({ message: "Activity not found" });
+    }
+    if (activity.status === "Verified") {
+      console.log("Activity already verified:", req.params.id);
+      return res.status(400).json({ message: "Already verified" });
+    }
 
-    const ref = await PointsReference.findOne({ category: activity.category, subCategory: activity.subCategory });
+    const ref = await PointsReference.findOne({
+      category: activity.category,
+      subCategory: activity.subCategory,
+    });
     const defaultPoints = ref ? ref.defaultPoints : activity.points;
     const maxPoints = ref ? ref.maxPoints : defaultPoints;
 
     // sum of already verified points for this student under this category
-    const verifiedActivities = await Activity.find({ studentRollNo: activity.studentRollNo, category: activity.category, status: 'Verified' });
-    const currentSum = verifiedActivities.reduce((s, a) => s + (a.points || 0), 0);
+    const verifiedActivities = await Activity.find({
+      studentRollNo: activity.studentRollNo,
+      category: activity.category,
+      status: "Verified",
+    });
+    const currentSum = verifiedActivities.reduce(
+      (s, a) => s + (a.points || 0),
+      0
+    );
     const allowed = Math.max(0, maxPoints - currentSum);
     const awarded = Math.min(defaultPoints, allowed);
 
+    console.log("Verification details:", {
+      activityId: req.params.id,
+      student: activity.studentRollNo,
+      category: activity.category,
+      defaultPoints,
+      maxPoints,
+      currentSum,
+      allowed,
+      awarded,
+    });
+
     // update activity
     activity.points = awarded;
-    activity.status = 'Verified';
+    activity.status = "Verified";
     await activity.save();
 
     // update student totals
@@ -52,43 +80,52 @@ router.post('/verify/:id', auth, adminMiddleware, async (req, res) => {
         const semKey = `semesterPoints.sem${activity.semester}`;
         // increment semester and total
         student.semesterPoints = student.semesterPoints || {};
-        student.semesterPoints[`sem${activity.semester}`] = (student.semesterPoints[`sem${activity.semester}`] || 0) + awarded;
+        student.semesterPoints[`sem${activity.semester}`] =
+          (student.semesterPoints[`sem${activity.semester}`] || 0) + awarded;
         student.totalPoints = (student.totalPoints || 0) + awarded;
         await student.save();
+        console.log(
+          "Student points updated:",
+          student.rollNo,
+          "Total:",
+          student.totalPoints
+        );
       }
     }
 
-    res.json({ message: 'Activity verified', activity });
+    res.json({ message: "Activity verified", activity });
   } catch (err) {
-    console.error(err);
-    res.status(500).send('Server error');
+    console.error("Verify error:", err);
+    res.status(500).json({ message: "Server error", error: err.message });
   }
 });
 
 // Reject activity
-router.post('/reject/:id', auth, adminMiddleware, async (req, res) => {
+router.post("/reject/:id", auth, adminMiddleware, async (req, res) => {
   try {
     const activity = await Activity.findById(req.params.id);
-    if (!activity) return res.status(404).json({ message: 'Activity not found' });
-    activity.status = 'Rejected';
+    if (!activity)
+      return res.status(404).json({ message: "Activity not found" });
+    activity.status = "Rejected";
     await activity.save();
-    res.json({ message: 'Activity rejected', activity });
+    res.json({ message: "Activity rejected", activity });
   } catch (err) {
     console.error(err);
-    res.status(500).send('Server error');
+    res.status(500).send("Server error");
   }
 });
 
 // Edit awarded points (admin) - adjusts student totals accordingly
-router.put('/edit-points/:id', auth, adminMiddleware, async (req, res) => {
+router.put("/edit-points/:id", auth, adminMiddleware, async (req, res) => {
   try {
     const { points } = req.body;
     const activity = await Activity.findById(req.params.id);
-    if (!activity) return res.status(404).json({ message: 'Activity not found' });
+    if (!activity)
+      return res.status(404).json({ message: "Activity not found" });
 
     const oldPoints = activity.points || 0;
     activity.points = Number(points);
-    if (activity.status !== 'Verified') activity.status = 'Verified';
+    if (activity.status !== "Verified") activity.status = "Verified";
     await activity.save();
 
     const diff = activity.points - oldPoints;
@@ -96,27 +133,31 @@ router.put('/edit-points/:id', auth, adminMiddleware, async (req, res) => {
       const student = await Student.findOne({ rollNo: activity.studentRollNo });
       if (student) {
         student.semesterPoints = student.semesterPoints || {};
-        student.semesterPoints[`sem${activity.semester}`] = (student.semesterPoints[`sem${activity.semester}`] || 0) + diff;
+        student.semesterPoints[`sem${activity.semester}`] =
+          (student.semesterPoints[`sem${activity.semester}`] || 0) + diff;
         student.totalPoints = (student.totalPoints || 0) + diff;
         await student.save();
       }
     }
 
-    res.json({ message: 'Points updated', activity });
+    res.json({ message: "Points updated", activity });
   } catch (err) {
     console.error(err);
-    res.status(500).send('Server error');
+    res.status(500).send("Server error");
   }
 });
 
 // Get all students with their details
-router.get('/students', auth, adminMiddleware, async (req, res) => {
+router.get("/students", auth, adminMiddleware, async (req, res) => {
   try {
-    const students = await Student.find({}, 'rollNo name department totalPoints semesterPoints').sort({ rollNo: 1 });
+    const students = await Student.find(
+      {},
+      "rollNo name department totalPoints semesterPoints"
+    ).sort({ rollNo: 1 });
     res.json(students);
   } catch (err) {
     console.error(err);
-    res.status(500).send('Server error');
+    res.status(500).send("Server error");
   }
 });
 

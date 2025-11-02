@@ -1,11 +1,15 @@
-const fs = require('fs');
-const path = require('path');
+const fs = require("fs");
+const path = require("path");
 
 let cloudinaryAvail = false;
 let cloudinary = null;
 
-if (process.env.CLOUD_NAME && process.env.CLOUD_API_KEY && process.env.CLOUD_API_SECRET) {
-  cloudinary = require('cloudinary').v2;
+if (
+  process.env.CLOUD_NAME &&
+  process.env.CLOUD_API_KEY &&
+  process.env.CLOUD_API_SECRET
+) {
+  cloudinary = require("cloudinary").v2;
   cloudinary.config({
     cloud_name: process.env.CLOUD_NAME,
     api_key: process.env.CLOUD_API_KEY,
@@ -15,20 +19,59 @@ if (process.env.CLOUD_NAME && process.env.CLOUD_API_KEY && process.env.CLOUD_API
 }
 
 const uploadFile = async (filePath) => {
-  if (cloudinaryAvail) {
-    const res = await cloudinary.uploader.upload(filePath, { folder: 'aptrack' });
+  // Temporarily disable Cloudinary and use local storage due to account restrictions
+  const useCloudinary = false; // Set to true when Cloudinary account is verified
+
+  if (cloudinaryAvail && useCloudinary) {
+    // Check if it's a PDF file - check both the temp file path and read file signature
+    const isPDF = filePath.toLowerCase().endsWith(".pdf");
+
+    // Also check the file's magic number to verify it's actually a PDF
+    let actuallyPDF = isPDF;
+    try {
+      const buffer = fs.readFileSync(filePath);
+      // PDF files start with %PDF
+      actuallyPDF = buffer.toString("utf-8", 0, 4) === "%PDF";
+    } catch (e) {
+      console.log("Could not read file signature:", e.message);
+    }
+
+    const uploadOptions = {
+      folder: "aptrack",
+      resource_type: actuallyPDF ? "raw" : "auto", // Use 'raw' for PDFs
+      access_mode: "public", // Make sure files are publicly accessible
+      type: "upload", // Specify upload type
+    };
+
+    console.log("📋 Upload options:", {
+      filePath,
+      isPDF: actuallyPDF,
+      resource_type: uploadOptions.resource_type,
+      access_mode: uploadOptions.access_mode,
+    });
+
+    const res = await cloudinary.uploader.upload(filePath, uploadOptions);
     // return secure_url and indicate local file may be removed
     return { secure_url: res.secure_url, removeLocal: true };
   }
 
   // Fallback: move file into uploads folder and serve it from backend
-  const uploadsDir = path.join(__dirname, '..', 'uploads');
+  console.log("📁 Using local storage (Cloudinary disabled or unavailable)");
+  const uploadsDir = path.join(__dirname, "..", "uploads");
   if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
   const fileName = path.basename(filePath);
   const dest = path.join(uploadsDir, fileName);
-  fs.renameSync(filePath, dest);
+
+  // If file already exists at destination (same name), skip rename
+  if (filePath !== dest) {
+    fs.renameSync(filePath, dest);
+  }
+
   const port = process.env.PORT || 5001;
-  const url = `http://localhost:${port}/uploads/${encodeURIComponent(fileName)}`;
+  const url = `http://localhost:${port}/uploads/${encodeURIComponent(
+    fileName
+  )}`;
+  console.log("✅ File stored locally:", url);
   return { secure_url: url, removeLocal: false };
 };
 
