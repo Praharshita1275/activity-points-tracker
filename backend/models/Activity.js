@@ -6,6 +6,7 @@ const ActivitySchema = new mongoose.Schema({
   category: { type: String, required: true },
   subCategory: { type: String, required: true },
   description: String,
+  durationWeeks: { type: Number },
   points: { type: Number, default: 0 },
   proofURL: String,
   status: { type: String, enum: ['Pending', 'Verified', 'Rejected'], default: 'Pending' },

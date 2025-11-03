@@ -29,6 +29,22 @@ router.post("/upload", auth, upload.single("proof"), async (req, res) => {
     const { category, subCategory, semester, description } = req.body;
     const rollNo = req.user.rollNo;
 
+    // Optional fields
+    const manualPoints =
+      req.body.points !== undefined &&
+      req.body.points !== null &&
+      req.body.points !== ""
+        ? Number(req.body.points)
+        : null;
+    const durationWeeks = req.body.durationWeeks
+      ? Number(req.body.durationWeeks)
+      : null;
+
+    // Basic validation
+    if (!category || !subCategory || !semester || !description || !Number.isFinite(Number(semester)) || !(Number.isFinite(durationWeeks) && durationWeeks > 0)) {
+      return res.status(400).json({ message: "All fields are required and duration must be > 0 weeks" });
+    }
+
     // Prevent accidental duplicate submissions: if the same student submitted
     // an activity with the same category/subCategory/semester/description within
     // the last 30 seconds, treat it as a duplicate.
@@ -42,12 +58,10 @@ router.post("/upload", auth, upload.single("proof"), async (req, res) => {
       createdAt: { $gte: recentWindow },
     });
     if (duplicate) {
-      return res
-        .status(409)
-        .json({
-          message:
-            "Duplicate submission detected. Please wait a moment before trying again.",
-        });
+      return res.status(409).json({
+        message:
+          "Duplicate submission detected. Please wait a moment before trying again.",
+      });
     }
 
     // find default points from reference
@@ -85,7 +99,15 @@ router.post("/upload", auth, upload.single("proof"), async (req, res) => {
       category,
       subCategory,
       description,
-      points: defaultPoints, // will be finalized on verification
+      durationWeeks:
+        Number.isFinite(durationWeeks) && durationWeeks > 0
+          ? durationWeeks
+          : undefined,
+      // If user provided manual points, use that; else the default reference
+      points:
+        Number.isFinite(manualPoints) && manualPoints >= 0
+          ? manualPoints
+          : defaultPoints,
       proofURL,
       status: "Pending",
     });
