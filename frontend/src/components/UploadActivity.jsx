@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import axios from "axios";
+import api, { apiMultipart } from "../api";
 import { toast } from "react-toastify";
 
 export default function UploadActivity() {
@@ -18,8 +18,13 @@ export default function UploadActivity() {
 
   useEffect(() => {
     const load = async () => {
-      const res = await axios.get("/api/points");
-      setPointsRef(res.data);
+      try {
+        const res = await api.get("/api/points");
+        setPointsRef(res.data);
+      } catch (err) {
+        console.error("Failed to load categories:", err);
+        toast.error("Failed to load categories. Please try again later.");
+      }
     };
     load();
   }, []);
@@ -57,9 +62,7 @@ export default function UploadActivity() {
         file.size
       );
 
-      await axios.post("/api/activities/upload", fd, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
+      await apiMultipart.post("/api/activities/upload", fd);
       toast.success("Successfully uploaded! Waiting for verification");
       // reset form
   setForm({ category: "", subCategory: "", semester: 1, description: "", durationWeeks: "", points: "" });

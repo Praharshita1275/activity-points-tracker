@@ -7,8 +7,8 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null)
 
   useEffect(()=>{
-    // Ensure axios sends requests to backend during development (match main.jsx)
-    axios.defaults.baseURL = 'http://localhost:5007'
+    // Ensure axios sends requests to the proper backend
+    axios.defaults.baseURL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5007'
 
     const token = localStorage.getItem('token')
     if (token) {

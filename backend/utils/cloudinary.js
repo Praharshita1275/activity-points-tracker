@@ -19,8 +19,8 @@ if (
 }
 
 const uploadFile = async (filePath) => {
-  // Temporarily disable Cloudinary and use local storage due to account restrictions
-  const useCloudinary = false; // Set to true when Cloudinary account is verified
+  // Toggle Cloudinary via env var
+  const useCloudinary = String(process.env.USE_CLOUDINARY || "false").toLowerCase() === "true";
 
   if (cloudinaryAvail && useCloudinary) {
     // Check if it's a PDF file - check both the temp file path and read file signature
@@ -67,10 +67,9 @@ const uploadFile = async (filePath) => {
     fs.renameSync(filePath, dest);
   }
 
-  const port = process.env.PORT || 5001;
-  const url = `http://localhost:${port}/uploads/${encodeURIComponent(
-    fileName
-  )}`;
+  // Prefer an explicitly configured public URL for the backend (use your Render service URL)
+  const base = process.env.BACKEND_PUBLIC_URL || `http://localhost:${process.env.PORT || 5001}`;
+  const url = `${base.replace(/\/$/, "")}/uploads/${encodeURIComponent(fileName)}`;
   console.log("✅ File stored locally:", url);
   return { secure_url: url, removeLocal: false };
 };
