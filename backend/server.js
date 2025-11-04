@@ -32,7 +32,8 @@ app.use(
 // API routes
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/activities', require('./routes/activities'));
-app.use('/api/admin', require('./routes/admin'));
+// app.use('/api/admin', require('./routes/admin')); // replaced by mentor routes
+app.use('/api/mentor', require('./routes/mentor'));
 app.use('/api/export', require('./routes/export'));
 app.use('/api/points', require('./routes/points'));
 

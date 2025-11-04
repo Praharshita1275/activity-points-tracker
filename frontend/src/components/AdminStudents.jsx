@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from 'react'
-import axios from 'axios'
+import api from '../api'
 
 export default function AdminStudents(){
   const [students, setStudents] = useState([])
 
   const load = async ()=>{
-    const res = await axios.get('/api/admin/students')
+    const res = await api.get('/api/mentor/students')
     setStudents(res.data)
   }
 
@@ -13,7 +13,7 @@ export default function AdminStudents(){
 
   return (
     <div className="p-6">
-      <h1 className="text-2xl mb-4 font-semibold text-[#333D79]">Admin - Student Details</h1>
+  <h1 className="text-2xl mb-4 font-semibold text-[#333D79]">Mentor - Student Details</h1>
       <div className="overflow-x-auto">
         <table className="min-w-full bg-white shadow rounded">
           <thead className="bg-gray-50">

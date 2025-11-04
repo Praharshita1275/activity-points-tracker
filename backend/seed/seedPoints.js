@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 require('dotenv').config();
 const PointsReference = require('../models/PointsReference');
 const Admin = require('../models/Admin');
+const Mentor = require('../models/Mentor');
 const bcrypt = require('bcryptjs');
 
 const seed = async () => {
@@ -27,12 +28,12 @@ const seed = async () => {
     if (!existing) await PointsReference.create(r);
   }
 
-  // create default admin
-  const existingAdmin = await Admin.findOne({ username: 'admin' });
-  if (!existingAdmin) {
-    const hashed = await bcrypt.hash('admin123', 10);
-    await Admin.create({ username: 'admin', password: hashed });
-    console.log('Default admin created: username=admin password=admin123');
+  // create default mentor
+  const existingMentor = await Mentor.findOne({ facultyId: 'mentor1' });
+  if (!existingMentor) {
+    const hashed = await bcrypt.hash('mentor123', 10);
+    await Mentor.create({ facultyId: 'mentor1', name: 'Default Mentor', department: 'General', password: hashed });
+    console.log('Default mentor created: facultyId=mentor1 password=mentor123');
   }
 
   console.log('PointsReference seeded');

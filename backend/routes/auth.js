@@ -4,6 +4,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const Student = require('../models/Student');
 const Admin = require('../models/Admin');
+const Mentor = require('../models/Mentor');
 const auth = require('../middleware/auth');
 
 // Student register
@@ -42,15 +43,34 @@ router.post('/login', async (req, res) => {
   }
 });
 
-// Admin login
-router.post('/admin/login', async (req, res) => {
-  const { username, password } = req.body;
+// Mentor register
+router.post('/mentor/register', async (req, res) => {
+  const { facultyId, name, department, password } = req.body;
   try {
-    const admin = await Admin.findOne({ username });
-    if (!admin) return res.status(400).json({ message: 'Invalid credentials' });
-    const isMatch = await bcrypt.compare(password, admin.password);
+    let mentor = await Mentor.findOne({ facultyId });
+    if (mentor) return res.status(400).json({ message: 'Faculty ID already registered' });
+    const salt = await bcrypt.genSalt(10);
+    const hashed = await bcrypt.hash(password, salt);
+    mentor = new Mentor({ facultyId, name, department, password: hashed });
+    await mentor.save();
+    const payload = { id: mentor._id, role: 'mentor', username: mentor.name || mentor.facultyId };
+    const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '7d' });
+    res.json({ token });
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Server error');
+  }
+});
+
+// Mentor login
+router.post('/mentor/login', async (req, res) => {
+  const { facultyId, password } = req.body;
+  try {
+    const mentor = await Mentor.findOne({ facultyId });
+    if (!mentor) return res.status(400).json({ message: 'Invalid credentials' });
+    const isMatch = await bcrypt.compare(password, mentor.password);
     if (!isMatch) return res.status(400).json({ message: 'Invalid credentials' });
-    const payload = { id: admin._id, username: admin.username, role: 'admin' };
+    const payload = { id: mentor._id, role: 'mentor', username: mentor.name || mentor.facultyId };
     const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '7d' });
     res.json({ token });
   } catch (err) {
@@ -66,9 +86,9 @@ router.get('/me', auth, async (req, res) => {
       const student = await Student.findById(req.user.id).select('-password');
       return res.json(student);
     }
-    if (req.user.role === 'admin') {
-      const admin = await Admin.findById(req.user.id).select('-password');
-      return res.json(admin);
+    if (req.user.role === 'mentor') {
+      const mentor = await Mentor.findById(req.user.id).select('-password');
+      return res.json(mentor);
     }
     res.status(400).json({ message: 'Unknown role' });
   } catch (err) {

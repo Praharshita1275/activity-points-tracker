@@ -8,6 +8,7 @@ import UploadActivity from './components/UploadActivity'
 import ActivitiesList from './components/ActivitiesList'
 import AdminDashboard from './components/AdminDashboard'
 import AdminStudents from './components/AdminStudents'
+import MentorRegister from './components/MentorRegister'
 import { useAuth } from './context/AuthContext'
 
 function App() {
@@ -18,12 +19,13 @@ function App() {
         <Routes>
           <Route path="/" element={user ? <Navigate to={user.role === 'admin' ? "/admin" : "/dashboard"} /> : <Login />} />
           <Route path="/register" element={<Register />} />
-          <Route path="/admin-login" element={user ? <Navigate to={user.role === 'admin' ? "/admin" : "/dashboard"} /> : <AdminLogin />} />
+          <Route path="/mentor-login" element={user ? <Navigate to={user.role === 'mentor' ? "/mentor" : "/dashboard"} /> : <AdminLogin />} />
+          <Route path="/mentor-register" element={user ? <Navigate to={user.role === 'mentor' ? "/mentor" : "/dashboard"} /> : <MentorRegister />} />
           <Route path="/dashboard" element={user ? <Dashboard /> : <Navigate to="/" />} />
           <Route path="/upload" element={user ? <UploadActivity /> : <Navigate to="/" />} />
           <Route path="/activities" element={user ? <ActivitiesList /> : <Navigate to="/" />} />
-          <Route path="/admin" element={user && user.role === 'admin' ? <AdminDashboard /> : <Navigate to="/admin-login" />} />
-          <Route path="/admin/students" element={user && user.role === 'admin' ? <AdminStudents /> : <Navigate to="/admin-login" />} />
+          <Route path="/mentor" element={user && user.role === 'mentor' ? <AdminDashboard /> : <Navigate to="/mentor-login" />} />
+          <Route path="/mentor/students" element={user && user.role === 'mentor' ? <AdminStudents /> : <Navigate to="/mentor-login" />} />
         </Routes>
       </div>
     </div>

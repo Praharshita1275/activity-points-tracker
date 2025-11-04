@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import axios from "axios";
+import api from "../api";
 import { toast } from "react-toastify";
 import ViewProofModal from "./ViewProofModal";
 import { Link } from "react-router-dom";
@@ -11,7 +11,7 @@ export default function AdminDashboard() {
 
   const load = async () => {
     try {
-      const res = await axios.get("/api/admin/activities");
+  const res = await api.get("/api/mentor/activities");
       setActivities(res.data);
     } catch (err) {
       console.error("Error loading activities:", err);
@@ -25,7 +25,7 @@ export default function AdminDashboard() {
 
   const approve = async (id) => {
     try {
-      await axios.post(`/api/admin/verify/${id}`);
+  await api.post(`/api/mentor/verify/${id}`);
       toast.success("Approved");
       load();
     } catch (err) {
@@ -36,7 +36,7 @@ export default function AdminDashboard() {
 
   const reject = async (id) => {
     try {
-      await axios.post(`/api/admin/reject/${id}`);
+  await api.post(`/api/mentor/reject/${id}`);
       toast.info("Rejected");
       load();
     } catch (err) {
@@ -58,11 +58,11 @@ export default function AdminDashboard() {
   return (
     <div className="p-6">
       <h1 className="text-2xl mb-4 font-semibold text-[#333D79]">
-        Admin - All Activities
+  Mentor - All Activities
       </h1>
       <div className="mb-4">
         <Link
-          to="/admin/students"
+          to="/mentor/students"
           className="bg-[#333D79] text-white px-4 py-2 rounded hover:bg-[#333D79]/90"
         >
           View All Students

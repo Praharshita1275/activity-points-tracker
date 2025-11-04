@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import axios from 'axios'
+import api from '../api'
 import { useAuth } from '../context/AuthContext'
 import { toast } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
@@ -13,7 +13,7 @@ export default function Login() {
   const submit = async (e) => {
     e.preventDefault()
     try {
-      const res = await axios.post('/api/auth/login', { rollNo, password })
+  const res = await api.post('/api/auth/login', { rollNo, password })
       login(res.data.token)
       toast.success('Logged in')
     } catch (err) {
@@ -42,9 +42,9 @@ export default function Login() {
             </Link>
           </p>
           <p className="mt-2 text-sm text-gray-600">
-            Are you an admin?{' '}
-            <Link to="/admin-login" className="font-medium text-indigo-600 hover:text-indigo-500">
-              Admin Login
+            Are you a mentor?{' '}
+            <Link to="/mentor-login" className="font-medium text-indigo-600 hover:text-indigo-500">
+              Mentor Login
             </Link>
           </p>
         </div>
