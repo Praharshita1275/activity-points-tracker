@@ -13,7 +13,7 @@ export default function Login() {
   const submit = async (e) => {
     e.preventDefault()
     try {
-  const res = await api.post('/api/auth/login', { rollNo, password })
+  const res = await api.post('/api/auth/login', { rollNo: rollNo.trim(), password: password })
       login(res.data.token)
       toast.success('Logged in')
     } catch (err) {

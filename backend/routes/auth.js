@@ -50,7 +50,8 @@ router.post('/register', async (req, res) => {
 
 // Student login
 router.post('/login', async (req, res) => {
-  const { rollNo, password } = req.body;
+  const rollNo = (req.body.rollNo || '').trim();
+  const password = req.body.password || '';
   try {
     const student = await Student.findOne({ rollNo });
     if (!student) return res.status(400).json({ message: 'Invalid credentials' });

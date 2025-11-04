@@ -11,16 +11,21 @@ router.get("/activities", auth, mentorMiddleware, async (req, res) => {
   try {
     const { rollNo, semester, category, status } = req.query;
     const filter = {};
-    if (rollNo) filter.studentRollNo = rollNo;
     if (semester) filter.semester = Number(semester);
     if (category) filter.category = category;
     if (status) filter.status = status;
     // restrict to students assigned to this mentor
     const assigned = await Student.find({ mentor: req.user.id }, 'rollNo');
     const rollNos = assigned.map(s => s.rollNo);
-    filter.studentRollNo = filter.studentRollNo
-      ? filter.studentRollNo
-      : { $in: rollNos };
+    if (rollNo) {
+      // If a specific rollNo is requested, ensure it belongs to this mentor
+      if (!rollNos.includes(rollNo)) {
+        return res.json([]);
+      }
+      filter.studentRollNo = rollNo;
+    } else {
+      filter.studentRollNo = { $in: rollNos };
+    }
     const activities = await Activity.find(filter).sort({ createdAt: -1 });
     res.json(activities);
   } catch (err) {
