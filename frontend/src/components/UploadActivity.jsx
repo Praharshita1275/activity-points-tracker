@@ -3,6 +3,43 @@ import api, { apiMultipart } from "../api";
 import { toast } from "react-toastify";
 
 export default function UploadActivity() {
+  // Fallback categories if backend has no PointsReference seeded
+  const FALLBACK_POINTS = useMemo(() => (
+    [
+      { category: 'MOOCs', subCategory: '12 weeks', defaultPoints: 0 },
+      { category: 'MOOCs', subCategory: '8 weeks', defaultPoints: 0 },
+      { category: 'Tech Fest / R&D Day / Freshers Workshop / Conference / Hackathons etc.', subCategory: 'Organizer', defaultPoints: 0 },
+      { category: 'Tech Fest / R&D Day / Freshers Workshop / Conference / Hackathons etc.', subCategory: 'Participant', defaultPoints: 0 },
+      { category: 'Rural Reporting', subCategory: 'General', defaultPoints: 0 },
+      { category: 'Harithaharam / Plantation', subCategory: 'General', defaultPoints: 0 },
+      { category: 'Participation in Relief Camps', subCategory: 'General', defaultPoints: 0 },
+      { category: 'Participation in Debate / Group Discussion / Technical Quiz', subCategory: 'General', defaultPoints: 0 },
+      { category: 'Publication in Newspaper, Magazines (Institution Level / Article / Internet)', subCategory: 'Editor', defaultPoints: 0 },
+      { category: 'Publication in Newspaper, Magazines (Institution Level / Article / Internet)', subCategory: 'Writer', defaultPoints: 0 },
+      { category: 'Publication in Newspaper, Magazine & Blogs', subCategory: 'General', defaultPoints: 0 },
+      { category: 'Research Publication', subCategory: 'General', defaultPoints: 0 },
+      { category: 'Innovation Projects', subCategory: 'General', defaultPoints: 0 },
+      { category: 'Blood Donation / NSS or NCC Participation', subCategory: 'General', defaultPoints: 0 },
+      { category: 'Blood Donation / NSS Camp Organization', subCategory: 'General', defaultPoints: 0 },
+      { category: 'Participation in Sports / Games', subCategory: 'College', defaultPoints: 0 },
+      { category: 'Participation in Sports / Games', subCategory: 'University', defaultPoints: 0 },
+      { category: 'Participation in Sports / Games', subCategory: 'Region', defaultPoints: 0 },
+      { category: 'Participation in Sports / Games', subCategory: 'State', defaultPoints: 0 },
+      { category: 'Participation in Sports / Games', subCategory: 'National', defaultPoints: 0 },
+      { category: 'Cultural Programme', subCategory: 'General', defaultPoints: 0 },
+      { category: 'Member of Professional Society', subCategory: 'General', defaultPoints: 0 },
+      { category: 'Student Chapter / Club', subCategory: 'General', defaultPoints: 0 },
+      { category: 'Relevant Industry Visit & Report', subCategory: 'General', defaultPoints: 0 },
+      { category: 'Photography Activity in Different Clubs', subCategory: 'General', defaultPoints: 0 },
+      { category: 'Participation in Yoga Camp', subCategory: 'General', defaultPoints: 0 },
+      { category: 'Self-Entrepreneurship Program', subCategory: 'General', defaultPoints: 0 },
+      { category: 'Adventure Sports with Certification', subCategory: 'General', defaultPoints: 0 },
+      { category: 'Training to Under-Privileged Physically Challenged', subCategory: 'General', defaultPoints: 0 },
+      { category: 'Community Service & Allied Activities', subCategory: 'General', defaultPoints: 0 },
+      { category: 'Class Representative', subCategory: 'General', defaultPoints: 0 },
+    ]
+  ), []);
+
   const [pointsRef, setPointsRef] = useState([]);
   const [form, setForm] = useState({
     category: "",
@@ -20,10 +57,17 @@ export default function UploadActivity() {
     const load = async () => {
       try {
         const res = await api.get("/api/points");
-        setPointsRef(res.data);
+        const data = Array.isArray(res.data) ? res.data : [];
+        if (data.length > 0) {
+          setPointsRef(data);
+        } else {
+          setPointsRef(FALLBACK_POINTS);
+        }
       } catch (err) {
         console.error("Failed to load categories:", err);
-        toast.error("Failed to load categories. Please try again later.");
+        // Use fallback so the user can proceed
+        setPointsRef(FALLBACK_POINTS);
+        toast.info("Loaded default categories");
       }
     };
     load();
