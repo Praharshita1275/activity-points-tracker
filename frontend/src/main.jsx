@@ -8,7 +8,7 @@ import './index.css'
 import NavBar from './components/NavBar'
 
 // Ensure axios sends requests to the correct backend
-axios.defaults.baseURL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5007'
+axios.defaults.baseURL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5001'
 
 createRoot(document.getElementById('root')).render(
   <React.StrictMode>

@@ -3,7 +3,7 @@ import axios from "axios";
 // Configure a shared Axios instance with a base URL from Vite env
 // Set VITE_API_BASE_URL in your hosting env (e.g., Render) to your backend URL
 // Example: VITE_API_BASE_URL=https://activity-points-tracker-backend.onrender.com
-const baseURL = import.meta.env.VITE_API_BASE_URL || "http://localhost:5007";
+const baseURL = import.meta.env.VITE_API_BASE_URL || "http://localhost:5001";
 
 export const api = axios.create({
 	baseURL,
