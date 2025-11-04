@@ -7,15 +7,37 @@ const Admin = require('../models/Admin');
 const Mentor = require('../models/Mentor');
 const auth = require('../middleware/auth');
 
-// Student register
+// Public: list mentors for student registration
+router.get('/mentors', async (req, res) => {
+  try {
+    const mentors = await Mentor.find({}, 'facultyId name department');
+    res.json(mentors);
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Server error');
+  }
+});
+
+// Student register (optional mentor assignment via mentorFacultyId or mentorId)
 router.post('/register', async (req, res) => {
-  const { rollNo, name, department, email, password } = req.body;
+  const { rollNo, name, department, email, password, mentorFacultyId, mentorId } = req.body;
   try {
     let student = await Student.findOne({ rollNo });
     if (student) return res.status(400).json({ message: 'Roll number already registered' });
     const salt = await bcrypt.genSalt(10);
     const hashed = await bcrypt.hash(password, salt);
-    student = new Student({ rollNo, name, department, email, password: hashed });
+    const studentData = { rollNo, name, department, email, password: hashed };
+
+    // Optional: attach mentor
+    let mentor = null;
+    if (mentorId) {
+      mentor = await Mentor.findById(mentorId);
+    } else if (mentorFacultyId) {
+      mentor = await Mentor.findOne({ facultyId: mentorFacultyId });
+    }
+    if (mentor) studentData.mentor = mentor._id;
+
+    student = new Student(studentData);
     await student.save();
     const payload = { id: student._id, rollNo: student.rollNo, role: 'student', username: student.name };
     const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '7d' });

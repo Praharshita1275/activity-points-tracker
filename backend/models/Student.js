@@ -6,6 +6,7 @@ const StudentSchema = new mongoose.Schema({
   department: String,
   email: String,
   password: { type: String, required: true },
+  mentor: { type: mongoose.Schema.Types.ObjectId, ref: 'Mentor' },
   semesterPoints: {
     sem1: { type: Number, default: 0 },
     sem2: { type: Number, default: 0 },

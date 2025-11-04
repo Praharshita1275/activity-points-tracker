@@ -1,16 +1,29 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import axios from 'axios'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'react-toastify'
 
 export default function Register(){
-  const [form, setForm] = useState({ rollNo: '', name: '', department: '', email: '', password: '' })
+  const [form, setForm] = useState({ rollNo: '', name: '', department: '', email: '', password: '', mentorFacultyId: '' })
+  const [mentors, setMentors] = useState([])
   const navigate = useNavigate()
+
+  useEffect(()=>{
+    const loadMentors = async () => {
+      try {
+        const res = await axios.get('/api/auth/mentors')
+        setMentors(res.data || [])
+      } catch (e) {
+        console.error('Failed to load mentors', e)
+      }
+    }
+    loadMentors()
+  },[])
 
   const submit = async (e) => {
     e.preventDefault()
     try {
-      await axios.post('/api/auth/register', form)
+  await axios.post('/api/auth/register', form)
       toast.success('Registered. Please login')
       navigate('/')
     } catch (err) {
@@ -124,6 +137,26 @@ export default function Register(){
               </div>
 
               <div className="pt-2">
+                {mentors.length > 0 && (
+                  <div className="mb-3">
+                    <label htmlFor="mentor" className="block text-xs font-medium text-gray-700 mb-1">
+                      Choose Mentor (optional)
+                    </label>
+                    <select
+                      id="mentor"
+                      className="block w-full px-2 py-1.5 border border-gray-300 rounded-md text-xs"
+                      value={form.mentorFacultyId}
+                      onChange={e=>setForm({...form, mentorFacultyId: e.target.value})}
+                    >
+                      <option value="">-- Select Mentor --</option>
+                      {mentors.map(m => (
+                        <option key={m.facultyId} value={m.facultyId}>
+                          {m.name || m.facultyId} ({m.department || 'General'})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
                 <button
                   type="submit"
                   className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white focus:outline-none focus:ring-2 focus:ring-offset-2"
