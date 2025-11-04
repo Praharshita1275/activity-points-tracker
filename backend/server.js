@@ -19,6 +19,8 @@ app.use(
     setHeaders: (res, filePath) => {
       // Enable CORS
       res.setHeader('Access-Control-Allow-Origin', '*');
+      // Allow cross-origin resource embedding (for PDF/image viewers)
+      res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
 
       // Ensure correct MIME type for PDFs and force inline display
       if (filePath.endsWith('.pdf')) {

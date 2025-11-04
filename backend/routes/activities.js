@@ -81,6 +81,20 @@ router.post("/upload", auth, upload.single("proof"), async (req, res) => {
       console.log("===============================================\n");
 
       proofURL = result.secure_url;
+      // If local storage produced a localhost URL in a hosted environment, rewrite to current host
+      try {
+        const isLocalhost = typeof proofURL === 'string' && /\blocalhost\b/.test(proofURL);
+        const hasUploadsSeg = typeof proofURL === 'string' && proofURL.includes('/uploads/');
+        if (isLocalhost && hasUploadsSeg) {
+          const afterUploads = proofURL.split('/uploads/')[1];
+          const fileSeg = afterUploads ? afterUploads.split('?')[0] : '';
+          const proto = (req.headers['x-forwarded-proto'] || req.protocol || 'https').split(',')[0];
+          const host = (req.headers['x-forwarded-host'] || req.get('host') || '').split(',')[0];
+          if (fileSeg && host) {
+            proofURL = `${proto}://${host}/uploads/${encodeURIComponent(decodeURIComponent(fileSeg))}`;
+          }
+        }
+      } catch (_) {}
       console.log("✅ Proof URL set to:", proofURL);
 
       if (result.removeLocal) {

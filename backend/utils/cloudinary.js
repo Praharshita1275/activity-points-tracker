@@ -68,7 +68,14 @@ const uploadFile = async (filePath) => {
   }
 
   // Prefer an explicitly configured public URL for the backend (use your Render service URL)
-  const base = process.env.BACKEND_PUBLIC_URL || `http://localhost:${process.env.PORT || 5001}`;
+  let base = process.env.BACKEND_PUBLIC_URL;
+  // Render provides RENDER_EXTERNAL_HOSTNAME; construct https URL if present
+  if (!base && process.env.RENDER_EXTERNAL_HOSTNAME) {
+    base = `https://${process.env.RENDER_EXTERNAL_HOSTNAME}`;
+  }
+  if (!base) {
+    base = `http://localhost:${process.env.PORT || 5001}`;
+  }
   const url = `${base.replace(/\/$/, "")}/uploads/${encodeURIComponent(fileName)}`;
   console.log("✅ File stored locally:", url);
   return { secure_url: url, removeLocal: false };

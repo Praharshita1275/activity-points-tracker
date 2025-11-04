@@ -14,12 +14,25 @@ export default function ViewProofModal({ isOpen, onClose, proofURL }) {
 
   useEffect(() => {
     if (proofURL) {
-      const ext = proofURL.split(".").pop().toLowerCase();
-      if (["jpg", "jpeg", "png", "gif", "webp"].includes(ext)) {
-        setFileType("image");
-      } else if (ext === "pdf") {
-        setFileType("pdf");
-      } else {
+      try {
+        const url = new URL(proofURL, window.location.origin);
+        const pathname = url.pathname || '';
+        const last = pathname.split('/').pop() || '';
+        const ext = (last.includes('.') ? last.split('.').pop() : '').toLowerCase();
+
+        if (["jpg", "jpeg", "png", "gif", "webp"].includes(ext)) {
+          setFileType("image");
+        } else if (ext === "pdf") {
+          setFileType("pdf");
+        } else {
+          // Unknown extension; treat Cloudinary raw PDFs without extension as pdf if URL hints
+          if (proofURL.includes("upload") && proofURL.toLowerCase().includes("pdf")) {
+            setFileType("pdf");
+          } else {
+            setFileType("unknown");
+          }
+        }
+      } catch {
         setFileType("unknown");
       }
       setError(null);
