@@ -124,16 +124,26 @@ export default function Register(){
                 <label htmlFor="password" className="block text-xs font-medium text-[#333D79] mb-1">
                   Password
                 </label>
-                <input
-                  id="password"
-                  name="password"
-                  type="password"
-                  required
-                  className="appearance-none block w-full px-2 py-1.5 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-[#333D79] focus:border-[#333D79] text-xs bg-white"
-                  placeholder="Create a password"
-                  value={form.password}
-                  onChange={e=>setForm({...form, password: e.target.value})}
-                />
+                <div className="relative">
+                  <input
+                    id="password"
+                    name="password"
+                    type={form.__showPwd ? 'text' : 'password'}
+                    required
+                    className="appearance-none block w-full px-2 py-1.5 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-[#333D79] focus:border-[#333D79] text-xs bg-white pr-10"
+                    placeholder="Create a password"
+                    value={form.password}
+                    onChange={e=>setForm({...form, password: e.target.value})}
+                  />
+                  <button
+                    type="button"
+                    aria-label={form.__showPwd ? 'Hide password' : 'Show password'}
+                    onClick={() => setForm(f => ({...f, __showPwd: !f.__showPwd}))}
+                    className="absolute inset-y-0 right-0 px-2 flex items-center text-gray-500 hover:text-gray-700"
+                  >
+                    {form.__showPwd ? 'Hide' : 'Show'}
+                  </button>
+                </div>
               </div>
 
               <div className="pt-2">

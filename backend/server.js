@@ -3,6 +3,7 @@ const express = require('express');
 const cors = require('cors');
 const connectDB = require('./config/db');
 const path = require('path');
+const fs = require('fs');
 
 const app = express();
 
@@ -13,6 +14,17 @@ app.use(cors());
 app.use(express.json());
 
 // ✅ serve uploads with proper headers for PDF embedding
+// Force-download route for locally stored files
+app.get('/downloads/:filename', (req, res) => {
+  const filename = req.params.filename;
+  const filePath = path.join(__dirname, 'uploads', filename);
+  if (!fs.existsSync(filePath)) {
+    return res.status(404).json({ message: 'File not found' });
+  }
+  // Express will set appropriate headers for attachment
+  return res.download(filePath, filename);
+});
+
 app.use(
   '/uploads',
   express.static(path.join(__dirname, 'uploads'), {
@@ -24,8 +36,8 @@ app.use(
 
       // Ensure correct MIME type for PDFs and force inline display
       if (filePath.endsWith('.pdf')) {
-        res.setHeader('Content-Type', 'application/pdf'); 
-        res.setHeader('Content-Disposition', 'inline'); 
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', 'inline');
       }
     },
   })

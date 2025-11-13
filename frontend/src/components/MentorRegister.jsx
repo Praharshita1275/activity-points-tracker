@@ -9,6 +9,7 @@ export default function MentorRegister(){
   const [name, setName] = useState('')
   const [department, setDepartment] = useState('')
   const [password, setPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
   const { login } = useAuth()
 
   const submit = async (e) => {
@@ -53,7 +54,23 @@ export default function MentorRegister(){
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
-              <input type="password" className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm text-sm" value={password} onChange={e=>setPassword(e.target.value)} required />
+              <div className="relative">
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm text-sm pr-10"
+                  value={password}
+                  onChange={e=>setPassword(e.target.value)}
+                  required
+                />
+                <button
+                  type="button"
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                  onClick={() => setShowPassword(s => !s)}
+                  className="absolute inset-y-0 right-0 px-3 flex items-center text-gray-500 hover:text-gray-700"
+                >
+                  {showPassword ? 'Hide' : 'Show'}
+                </button>
+              </div>
             </div>
             <button type="submit" className="w-full py-2 px-4 rounded-md text-white" style={{ backgroundColor: '#333D79' }}>Create Mentor</button>
           </form>

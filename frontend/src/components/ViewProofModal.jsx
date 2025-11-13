@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import axios from "axios";
 import { Document, Page, pdfjs } from "react-pdf";
 import "react-pdf/dist/Page/AnnotationLayer.css";
 import "react-pdf/dist/Page/TextLayer.css";
@@ -11,6 +12,62 @@ export default function ViewProofModal({ isOpen, onClose, proofURL }) {
   const [error, setError] = useState(null);
   const [numPages, setNumPages] = useState(null);
   const [pageNumber, setPageNumber] = useState(1);
+  
+  const API_BASE = (import.meta?.env?.VITE_API_BASE_URL) || axios.defaults.baseURL || '';
+
+  const buildCloudinaryDownloadUrl = (urlStr) => {
+    try {
+      const url = new URL(urlStr);
+      // Cloudinary URLs typically contain /upload/ (or /raw/upload/)
+      const segments = url.pathname.split('/');
+      const uploadIdx = segments.findIndex(s => s === 'upload');
+      if (uploadIdx !== -1) {
+        // If fl_attachment already present, keep as-is
+        if (!segments.includes('fl_attachment') && !segments.some(s => s.startsWith('fl_attachment:'))) {
+          segments.splice(uploadIdx + 1, 0, 'fl_attachment');
+          url.pathname = segments.join('/');
+        }
+        return url.toString();
+      }
+    } catch {}
+    return urlStr;
+  };
+
+  const buildLocalDownloadUrl = (urlStr) => {
+    try {
+      const url = new URL(urlStr, window.location.origin);
+      const parts = url.pathname.split('/');
+      const uploadsIdx = parts.findIndex(p => p === 'uploads');
+      if (uploadsIdx !== -1 && parts[uploadsIdx + 1]) {
+        const filename = parts.slice(uploadsIdx + 1).join('/');
+        const base = (API_BASE || '').replace(/\/$/, '');
+        return `${base}/downloads/${encodeURIComponent(filename)}`;
+      }
+    } catch {}
+    return urlStr;
+  };
+
+  const getDownloadUrl = () => {
+    if (!proofURL) return '#';
+    if (proofURL.includes('res.cloudinary.com')) {
+      return buildCloudinaryDownloadUrl(proofURL);
+    }
+    if (proofURL.includes('/uploads/')) {
+      return buildLocalDownloadUrl(proofURL);
+    }
+    return proofURL;
+  };
+
+  const triggerDownload = () => {
+    const url = getDownloadUrl();
+    const a = document.createElement('a');
+    a.href = url;
+    // download attribute helps for same-origin; Cloudinary will force attachment via fl_attachment
+    a.setAttribute('download', '');
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+  };
 
   useEffect(() => {
     if (proofURL) {
@@ -69,13 +126,13 @@ export default function ViewProofModal({ isOpen, onClose, proofURL }) {
             >
               Open in New Tab
             </a>
-            <a
-              href={proofURL}
-              download
+            <button
+              type="button"
+              onClick={triggerDownload}
               className="px-4 py-2 text-sm bg-gray-600 text-white rounded hover:bg-gray-700 transition-colors"
             >
               Download
-            </a>
+            </button>
             <button
               onClick={onClose}
               className="px-4 py-2 text-sm bg-gray-100 rounded hover:bg-gray-200 text-gray-700 transition-colors"
@@ -177,13 +234,13 @@ export default function ViewProofModal({ isOpen, onClose, proofURL }) {
                   >
                     Open in New Tab
                   </a>
-                  <a
-                    href={proofURL}
-                    download
+                  <button
+                    type="button"
+                    onClick={triggerDownload}
                     className="inline-block px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700"
                   >
                     Download PDF
-                  </a>
+                  </button>
                 </div>
               </div>
             )}
@@ -193,14 +250,13 @@ export default function ViewProofModal({ isOpen, onClose, proofURL }) {
                 <p className="text-gray-600 mb-4">
                   This file type may not be viewable directly in the browser.
                 </p>
-                <a
-                  href={proofURL}
-                  target="_blank"
-                  rel="noreferrer"
+                <button
+                  type="button"
+                  onClick={triggerDownload}
                   className="inline-block px-4 py-2 bg-[#333D79] text-white rounded hover:bg-[#333D79]/90"
                 >
                   Download File
-                </a>
+                </button>
               </div>
             )}
           </div>

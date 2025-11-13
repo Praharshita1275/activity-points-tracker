@@ -8,6 +8,8 @@ import { Link } from 'react-router-dom'
 export default function AdminLogin() {
   const [facultyId, setFacultyId] = useState('')
   const [password, setPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
+  const [errorMsg, setErrorMsg] = useState('')
   const { login } = useAuth()
 
   const submit = async (e) => {
@@ -16,9 +18,16 @@ export default function AdminLogin() {
       const res = await api.post('/api/auth/mentor/login', { facultyId, password })
       login(res.data.token)
       toast.success('Logged in as mentor')
+      setErrorMsg('')
     } catch (err) {
       console.error(err)
-      toast.error(err.response?.data?.message || 'Mentor login failed')
+      const msg = err.response?.data?.message
+      if (err.response?.status === 400 && msg) {
+        setErrorMsg('Wrong password')
+      } else {
+        setErrorMsg('Mentor login failed')
+      }
+      toast.error(msg || 'Mentor login failed')
     }
   }
 
@@ -72,17 +81,30 @@ export default function AdminLogin() {
               <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
                 Password
               </label>
-              <input
-                id="password"
-                name="password"
-                type="password"
-                required
-                className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 text-sm"
-                placeholder="Enter admin password"
-                value={password}
-                onChange={e=>setPassword(e.target.value)}
-                autoComplete="current-password"
-              />
+              <div className="relative">
+                <input
+                  id="password"
+                  name="password"
+                  type={showPassword ? 'text' : 'password'}
+                  required
+                  className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 text-sm pr-10"
+                  placeholder="Enter mentor password"
+                  value={password}
+                  onChange={e=>setPassword(e.target.value)}
+                  autoComplete="current-password"
+                />
+                <button
+                  type="button"
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                  onClick={() => setShowPassword(s => !s)}
+                  className="absolute inset-y-0 right-0 px-3 flex items-center text-gray-500 hover:text-gray-700"
+                >
+                  {showPassword ? 'Hide' : 'Show'}
+                </button>
+              </div>
+              {errorMsg && (
+                <p className="mt-1 text-sm text-red-600">{errorMsg}</p>
+              )}
             </div>
 
             <button
